@@ -213,3 +213,8 @@ sock_handle_t socket_handle_invalid()
 {
     return SOCKET_INVALID;
 }
+
+sock_result_t socket_peer(sock_handle_t sd, sock_peer_t* peer, void* reserved)
+{
+    return -1;
+}

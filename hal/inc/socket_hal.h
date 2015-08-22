@@ -92,7 +92,13 @@ sock_result_t socket_accept(sock_handle_t sd);
  */
 sock_handle_t socket_handle_invalid();
 
+typedef struct sock_peer_t {
+    uint16_t size;
+    HAL_IPAddress address;
+    uint16_t port;
+} sock_peer_t;
 
+sock_result_t socket_peer(sock_handle_t sd, sock_peer_t* peer, void* reserved);
 
 //--------- Address Families --------
 

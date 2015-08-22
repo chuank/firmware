@@ -978,3 +978,19 @@ sock_handle_t socket_handle_invalid()
 {
     return SOCKET_INVALID;
 }
+
+sock_result_t socket_peer(sock_handle_t sd, sock_peer_t* peer, void* reserved)
+{
+    tcp_server_client_t* c = client(from_handle(sd));
+    sock_result_t result = WICED_INVALID_SOCKET;
+    if (c && peer)
+    {
+        wiced_tcp_socket_t* wiced_sock = c->get_socket();
+        wiced_ip_address_t ip;
+        result = wiced_tcp_server_peer( wiced_sock, &ip, &peer->port);
+        if (result==WICED_SUCCESS) {
+            peer->address.ipv4 = GET_IPV4_ADDRESS(ip);
+        }
+    }
+    return result;
+}
