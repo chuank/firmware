@@ -2,6 +2,7 @@
 ## v0.4.5
 
 ### FEATURES
+- `WiFi.scan` function to retrieve details of local access points. [#567](https://github.com/spark/firmware/pull/567)
 
 ### ENHANCEMENTS
 - [Recipes and Tips](docs/build.md#recipes-and-tips) section in the build documentation.
