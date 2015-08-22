@@ -2,6 +2,7 @@
 ## v0.4.5
 
 ### FEATURES
+ - `SPI.setClockDividerReference`, `SPI.setClockSpeed` to set clock speed in a more portable manner. [#454]https://github.com/spark/firmware/issues/454
 
 ### ENHANCEMENTS
 - [Recipes and Tips](docs/build.md#recipes-and-tips) section in the build documentation.
