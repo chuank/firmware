@@ -162,6 +162,7 @@ bool SparkProtocol::event_loop(void)
     if (updating)
     {
       system_tick_t millis_since_last_chunk = callbacks.millis() - last_chunk_millis;
+
       if (3000 < millis_since_last_chunk)
       {
           if (updating==2) {    // send missing chunks
@@ -169,7 +170,6 @@ bool SparkProtocol::event_loop(void)
               if (!send_missing_chunks(MISSED_CHUNKS_TO_SEND))
                   return false;
           }
-          /* Do not resend chunks since this can cause duplicates on the server.
           else
           {
             queue[0] = 0;
@@ -181,7 +181,6 @@ bool SparkProtocol::event_loop(void)
               return false;
             }
           }
-          */
           last_chunk_millis = callbacks.millis();
       }
     }
@@ -538,7 +537,12 @@ bool SparkProtocol::send_event(const char *event_name, const char *data,
       eventsThisMinute++;
   }
   else {
-    static system_tick_t recent_event_ticks[5] = {
+    // EDIT: increasing limit here to test on local cloud
+
+    static system_tick_t recent_event_ticks[11] = {
+      (system_tick_t) -1000, (system_tick_t) -1000,
+      (system_tick_t) -1000, (system_tick_t) -1000,
+      (system_tick_t) -1000, (system_tick_t) -1000,
       (system_tick_t) -1000, (system_tick_t) -1000,
       (system_tick_t) -1000, (system_tick_t) -1000,
       (system_tick_t) -1000 };
@@ -546,10 +550,10 @@ bool SparkProtocol::send_event(const char *event_name, const char *data,
 
     system_tick_t now = recent_event_ticks[evt_tick_idx] = callbacks.millis();
     evt_tick_idx++;
-    evt_tick_idx %= 5;
-    if (now - recent_event_ticks[evt_tick_idx] < 1000)
+    evt_tick_idx %= 11;
+    if (now - recent_event_ticks[evt_tick_idx] < 250)
     {
-      // exceeded allowable burst of 4 events per second
+      // exceeded allowable burst of 10 events per second?
       return false;
     }
   }
