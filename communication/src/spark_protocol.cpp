@@ -538,7 +538,12 @@ bool SparkProtocol::send_event(const char *event_name, const char *data,
       eventsThisMinute++;
   }
   else {
-    static system_tick_t recent_event_ticks[5] = {
+    // EDIT: increasing limit here to test on local cloud
+
+    static system_tick_t recent_event_ticks[11] = {
+      (system_tick_t) -1000, (system_tick_t) -1000,
+      (system_tick_t) -1000, (system_tick_t) -1000,
+      (system_tick_t) -1000, (system_tick_t) -1000,
       (system_tick_t) -1000, (system_tick_t) -1000,
       (system_tick_t) -1000, (system_tick_t) -1000,
       (system_tick_t) -1000 };
@@ -546,10 +551,10 @@ bool SparkProtocol::send_event(const char *event_name, const char *data,
 
     system_tick_t now = recent_event_ticks[evt_tick_idx] = callbacks.millis();
     evt_tick_idx++;
-    evt_tick_idx %= 5;
-    if (now - recent_event_ticks[evt_tick_idx] < 1000)
+    evt_tick_idx %= 11;
+    if (now - recent_event_ticks[evt_tick_idx] < 250)
     {
-      // exceeded allowable burst of 4 events per second
+      // exceeded allowable burst of 10 events per second?
       return false;
     }
   }
