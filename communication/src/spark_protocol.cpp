@@ -538,25 +538,25 @@ bool SparkProtocol::send_event(const char *event_name, const char *data,
       eventsThisMinute++;
   }
   else {
-    // EDIT: increasing limit here to test on local cloud
-
-    static system_tick_t recent_event_ticks[11] = {
-      (system_tick_t) -1000, (system_tick_t) -1000,
-      (system_tick_t) -1000, (system_tick_t) -1000,
-      (system_tick_t) -1000, (system_tick_t) -1000,
-      (system_tick_t) -1000, (system_tick_t) -1000,
-      (system_tick_t) -1000, (system_tick_t) -1000,
-      (system_tick_t) -1000 };
-    static int evt_tick_idx = 0;
-
-    system_tick_t now = recent_event_ticks[evt_tick_idx] = callbacks.millis();
-    evt_tick_idx++;
-    evt_tick_idx %= 11;
-    if (now - recent_event_ticks[evt_tick_idx] < 250)
-    {
-      // exceeded allowable burst of 10 events per second?
-      return false;
-    }
+    // // EDIT: increasing limit here to test on local cloud
+    //
+    // static system_tick_t recent_event_ticks[11] = {
+    //   (system_tick_t) -1000, (system_tick_t) -1000,
+    //   (system_tick_t) -1000, (system_tick_t) -1000,
+    //   (system_tick_t) -1000, (system_tick_t) -1000,
+    //   (system_tick_t) -1000, (system_tick_t) -1000,
+    //   (system_tick_t) -1000, (system_tick_t) -1000,
+    //   (system_tick_t) -1000 };
+    // static int evt_tick_idx = 0;
+    //
+    // system_tick_t now = recent_event_ticks[evt_tick_idx] = callbacks.millis();
+    // evt_tick_idx++;
+    // evt_tick_idx %= 11;
+    // if (now - recent_event_ticks[evt_tick_idx] < 250)
+    // {
+    //   // exceeded allowable burst of 10 events per second?
+    //   return false;
+    // }
   }
   uint16_t msg_id = next_message_id();
   size_t msglen = event(queue + 2, msg_id, event_name, data, ttl, event_type);
