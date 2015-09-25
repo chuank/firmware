@@ -1,8 +1,7 @@
 /**
  ******************************************************************************
- * @file    system-wifi.h
- * @authors Matthew McGowan
- * @date    09 February 2015
+ * @file    hal_dynalib_export.c
+ * @author  Matthew McGowan
  ******************************************************************************
   Copyright (c) 2015 Particle Industries, Inc.  All rights reserved.
 
@@ -21,32 +20,17 @@
  ******************************************************************************
  */
 
-#ifndef SYSTEM_PART1_H
-#define	SYSTEM_PART1_H
-
-#include "dynalib.h"
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/**
- * Indices into the module-level export table.
- */
-#define SYSTEM_PART1MODULE_JUMP_TABLE_INDEX_COMMUNICATION 0
-#define SYSTEM_PART1MODULE_JUMP_TABLE_INDEX_PART1RESOURCE 1
-#define SYSTEM_PART1MODULE_JUMP_TABLE_INDEX_MODULE 2
-#define SYSTEM_PART1MODULE_JUMP_TABLE_INDEX_SERVICES 3
-
-/**
- * The static module-level export table of library jump table addresses.
- */
-extern const void* const system_part1_module[];
-
-
-#ifdef	__cplusplus
-}
-#endif
-
-#endif	/* SYSTEM_WIFI_H */
+#define DYNALIB_EXPORT
+#include "hal_dynalib.h"
+#include "hal_dynalib_core.h"
+#include "hal_dynalib_gpio.h"
+#include "hal_dynalib_i2c.h"
+#include "hal_dynalib_ota.h"
+#include "hal_dynalib_peripherals.h"
+#include "hal_dynalib_socket.h"
+#include "hal_dynalib_spi.h"
+#include "hal_dynalib_usart.h"
+#include "hal_dynalib_wlan.h"
+#include "hal_dynalib_concurrent.h"
+#include "hal_dynalib_cellular.h"
 

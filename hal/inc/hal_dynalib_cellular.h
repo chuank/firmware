@@ -1,7 +1,8 @@
 /**
  ******************************************************************************
- * @file    hal_dynalib_export.c
- * @author  Matthew McGowan
+ * @file    hal_dynalib_wlan.h
+ * @authors Matthew McGowan
+ * @date    04 March 2015
  ******************************************************************************
   Copyright (c) 2015 Particle Industries, Inc.  All rights reserved.
 
@@ -20,17 +21,30 @@
  ******************************************************************************
  */
 
-#define DYNALIB_EXPORT
-#include "hal_dynalib.h"
-#include "hal_dynalib_core.h"
-#include "hal_dynalib_gpio.h"
-#include "hal_dynalib_i2c.h"
-#include "hal_dynalib_ota.h"
-#include "hal_dynalib_peripherals.h"
-#include "hal_dynalib_socket.h"
-#include "hal_dynalib_spi.h"
-#include "hal_dynalib_usart.h"
-#include "hal_dynalib_wlan.h"
-#include "hal_dynalib_concurrent.h"
+#ifndef HAL_DYNALIB_CELLULAR_H
+#define	HAL_DYNALIB_CELLULAR_H
+
+#include "dynalib.h"
+
+#ifdef DYNALIB_EXPORT
+#include "cellular_hal.h"
+#endif
+
+DYNALIB_BEGIN(hal_cellular)
+DYNALIB_FN(hal_cellular, cellular_off)
+DYNALIB_FN(hal_cellular, cellular_on)
+DYNALIB_FN(hal_cellular, cellular_init)
+DYNALIB_FN(hal_cellular, cellular_register)
+DYNALIB_FN(hal_cellular, cellular_pdp_activate)
+DYNALIB_FN(hal_cellular, cellular_pdp_deactivate)
+DYNALIB_FN(hal_cellular, cellular_gprs_attach)
+DYNALIB_FN(hal_cellular, cellular_gprs_detach)
+DYNALIB_FN(hal_cellular, cellular_fetch_ipconfig)
+DYNALIB_FN(hal_cellular, cellular_device_info)
+DYNALIB_FN(hal_cellular, cellular_credentials_set)
+DYNALIB_FN(hal_cellular, cellular_credentials_get)
+DYNALIB_FN(hal_cellular, cellular_sim_ready)
+DYNALIB_END(hal_cellular)
 
 
+#endif

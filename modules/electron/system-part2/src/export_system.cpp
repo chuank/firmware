@@ -1,8 +1,8 @@
 /**
  ******************************************************************************
- * @file    module_system_part2.h
- * @authors Matthew McGowan
- * @date    10 February 2015
+ * @file    export_system.cpp
+ * @authors mat
+ * @date    31 March 2015
  ******************************************************************************
   Copyright (c) 2015 Particle Industries, Inc.  All rights reserved.
 
@@ -21,15 +21,8 @@
  ******************************************************************************
  */
 
-#ifndef MODULE_SYSTEM_PART2_H
-#define	MODULE_SYSTEM_PART2_H
+#define DYNALIB_EXPORT
 
-#define SYSTEM_PART2_MODULE_JUMP_TABLE_INDEX_SERVICES 0
-#define SYSTEM_PART2_MODULE_JUMP_TABLE_INDEX_HAL 1
-#define SYSTEM_PART2_MODULE_JUMP_TABLE_INDEX_RT 2
-
-DYNALIB_EXTERN_C const void* const system_part1_module[];
-
-
-#endif
-
+#include "system_dynalib.h"
+#include "system_dynalib_net.h"
+#include "system_dynalib_cloud.h"

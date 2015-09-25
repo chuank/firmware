@@ -210,10 +210,8 @@ void HAL_Core_Config(void)
 #endif
 
     HAL_Core_Config_systick_configuration();
-#if PLATFORM_ID!=PLATFORM_ELECTRON_PRODUCTION
-    // ELECTRON TODO: re-instate this when working
+
     HAL_RTC_Configuration();
-#endif
 
     HAL_RNG_Configuration();
 
@@ -840,4 +838,13 @@ bool HAL_Core_System_Reset_FlagSet(RESET_TypeDef resetType)
 unsigned HAL_Core_System_Clock(HAL_SystemClock clock, void* reserved)
 {
     return SystemCoreClock;
+}
+
+uint32_t HAL_Core_Runtime_Info(runtime_info_t* info, void* reserved)
+{
+    extern unsigned char _eheap[];
+    extern unsigned char *sbrk_heap_top;
+
+    info->freeheap = _eheap-sbrk_heap_top;
+    return 0;
 }
