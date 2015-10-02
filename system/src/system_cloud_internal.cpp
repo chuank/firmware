@@ -24,6 +24,8 @@
 #include "system_mode.h"
 #include "system_network.h"
 #include "system_task.h"
+#include "system_threading.h"
+#include "spark_wiring_string.h"
 #include "spark_protocol_functions.h"
 #include "spark_protocol.h"
 #include "append_list.h"
@@ -127,6 +129,12 @@ int call_raw_user_function(void* data, const char* param, void* reserved)
     return (*fn)(p);
 }
 
+/**
+ * Register a function.
+ * @param desc
+ * @param reserved
+ * @return
+ */
 bool spark_function_internal(const cloud_function_descriptor* desc, void* reserved)
 {
     User_Func_Lookup_Table_t* item = NULL;
@@ -143,7 +151,45 @@ bool spark_function_internal(const cloud_function_descriptor* desc, void* reserv
     return item!=NULL;
 }
 
-uint32_t lastCloudEvent = 0;
+
+void invokeEventHandlerInternal(uint16_t handlerInfoSize, FilteringEventHandler* handlerInfo,
+                const char* event_name, const char* data, void* reserved)
+{
+    if(handlerInfo->handler_data)
+    {
+        EventHandlerWithData handler = (EventHandlerWithData) handlerInfo->handler;
+        handler(handlerInfo->handler_data, event_name, data);
+    }
+    else
+    {
+        handlerInfo->handler(event_name, data);
+    }
+}
+
+void invokeEventHandlerString(uint16_t handlerInfoSize, FilteringEventHandler* handlerInfo,
+                const String& name, const String& data, void* reserved)
+{
+    invokeEventHandlerInternal(handlerInfoSize, handlerInfo, name.c_str(), data.c_str(), reserved);
+}
+
+
+void invokeEventHandler(uint16_t handlerInfoSize, FilteringEventHandler* handlerInfo,
+                const char* event_name, const char* event_data, void* reserved)
+{
+    if (system_thread_get_state(NULL)==spark::feature::DISABLED)
+    {
+        invokeEventHandlerInternal(handlerInfoSize, handlerInfo, event_name, event_data, reserved);
+    }
+    else
+    {
+        // copy the buffers to dynamically allocated storage.
+        String name(event_name);
+        String data(event_data);
+        APPLICATION_THREAD_CONTEXT_ASYNC(invokeEventHandlerString(handlerInfoSize, handlerInfo, name, event_data, reserved));
+    }
+}
+
+volatile uint32_t lastCloudEvent = 0;
 
 /**
  * This is the internal function called by the background loop to pump cloud events.
@@ -237,11 +283,22 @@ SparkReturnType::Enum wrapVarTypeInEnum(const char *varKey)
 }
 
 const char* CLAIM_EVENTS = "spark/device/claim/";
+const char* RESET_EVENT = "spark/device/reset";
 
 void SystemEvents(const char* name, const char* data)
 {
     if (!strncmp(name, CLAIM_EVENTS, strlen(CLAIM_EVENTS))) {
         HAL_Set_Claim_Code(NULL);
+    }
+    if (!strcmp(name, RESET_EVENT)) {
+        if (data && *data) {
+            if (!strcmp("safe mode", data))
+                System.enterSafeMode();
+            else if (!strcmp("dfu", data))
+                System.dfu(false);
+            else if (!strcmp("reboot", data))
+                System.reset();
+        }
     }
 }
 
@@ -294,6 +351,7 @@ void Spark_Protocol_Init(void)
         descriptor.was_ota_upgrade_successful = HAL_OTA_Flashed_GetStatus;
         descriptor.ota_upgrade_status_sent = HAL_OTA_Flashed_ResetStatus;
         descriptor.append_system_info = system_module_info;
+        descriptor.call_event_handler = invokeEventHandler;
 
         unsigned char pubkey[EXTERNAL_FLASH_SERVER_PUBLIC_KEY_LENGTH];
         unsigned char private_key[EXTERNAL_FLASH_CORE_PRIVATE_KEY_LENGTH];
@@ -347,6 +405,9 @@ int Spark_Handshake(void)
 
         ultoa(HAL_OTA_ChunkSize(), buf, 10);
         Particle.publish("spark/hardware/ota_chunk_size", buf, 60, PRIVATE);
+
+        if (system_mode()==SAFE_MODE)
+            Particle.publish("spark/device/safemode","", 60, PRIVATE);
 
         if (!HAL_core_subsystem_version(buf, sizeof (buf)))
         {
@@ -587,12 +648,30 @@ const void *getUserVar(const char *varKey)
     return item ? item->userVar : NULL;
 }
 
+void userFuncScheduleImpl(User_Func_Lookup_Table_t* item, const char* paramString, bool freeParamString, SparkDescriptor::FunctionResultCallback callback)
+{
+    int result = item->pUserFunc(item->pUserFuncData, paramString, NULL);
+    if (freeParamString)
+        delete paramString;
+    // run the cloud return on the system thread again
+    SYSTEM_THREAD_CONTEXT_ASYNC(callback((const void*)result, SparkReturnType::INT));
+    callback((const void*)result, SparkReturnType::INT);
+}
+
 int userFuncSchedule(const char *funcKey, const char *paramString, SparkDescriptor::FunctionResultCallback callback, void* reserved)
 {
     // for now, we invoke the function directly and return the result via the callback
     User_Func_Lookup_Table_t* item = find_func_by_key(funcKey);
-    long result = item ? item->pUserFunc(item->pUserFuncData, paramString, NULL) : -1;
-    callback((const void*)result, SparkReturnType::INT);
+    if (!item)
+        return -1;
+
+#if PLATFORM_THREADING
+    paramString = strdup(paramString);      // ensure we have a copy since the oriignal isn't guaranteed to be available once this function returns.
+    APPLICATION_THREAD_CONTEXT_ASYNC_RESULT(userFuncScheduleImpl(item, paramString, true, callback), 0);
+    userFuncScheduleImpl(item, paramString, true, callback);
+#else
+    userFuncScheduleImpl(item, paramString, false, callback);
+#endif
     return 0;
 }
 

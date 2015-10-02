@@ -28,6 +28,8 @@
 #include "stm32_it.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "semphr.h"
+#include "dcd_flash.h"
 
 /* Private typedef ----------------------------------------------------------*/
 
@@ -221,6 +223,8 @@ extern volatile uint32_t TimingDelay;
 
 void HAL_Core_Config_systick_configuration(void) {
     SysTick_Configuration();
+
+    dcd_migrate_data();
 }
 
 /**
@@ -296,28 +300,41 @@ static TaskHandle_t  app_thread_handle;
 #define APPLICATION_STACK_SIZE 6144
 
 /**
+ * The mutex to ensure only one thread manipulates the heap at a given time.
+ */
+xSemaphoreHandle malloc_mutex = 0;
+
+static void init_malloc_mutex(void)
+{
+    malloc_mutex = xSemaphoreCreateRecursiveMutex();
+}
+
+void __malloc_lock(void* ptr)
+{
+    if (malloc_mutex)
+        while (!xSemaphoreTakeRecursive(malloc_mutex, 0xFFFFFFFF)) {}
+}
+
+void __malloc_unlock(void* ptr)
+{
+    if (malloc_mutex)
+        xSemaphoreGiveRecursive(malloc_mutex);
+}
+
+/**
  * Called from startup_stm32f2xx.s at boot, main entry point.
  */
 int main(void)
 {
+    init_malloc_mutex();
     xTaskCreate( application_start, "app_thread", APPLICATION_STACK_SIZE/sizeof( portSTACK_TYPE ), NULL, 2, &app_thread_handle);
 
     vTaskStartScheduler();
-
-
-    uint32_t* isrs                          = (uint32_t*)&link_ram_interrupt_vectors_location;
-    isrs[SysTick_Handler_Idx]               = (uint32_t)SysTick_Handler;
 
     /* we should never get here */
     while (1);
 
     return 0;
-}
-
-
-void vApplicationTickHook()
-{
-    SysTickOverride();
 }
 
 /**

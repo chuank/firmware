@@ -23,6 +23,7 @@
 #include "system_network_internal.h"
 #include "system_cloud.h"
 #include "system_event.h"
+#include "system_threading.h"
 #include "watchdog_hal.h"
 #include "wlan_hal.h"
 #include "delay_hal.h"
@@ -42,6 +43,7 @@ volatile uint8_t SPARK_WLAN_STARTED;
 WiFiNetworkInterface wifi;
 ManagedNetworkInterface& network = wifi;
 inline NetworkInterface& nif(network_interface_t _nif) { return wifi; }
+#define Wiring_Network 1
 #endif
 
 #if Wiring_Cellular
@@ -49,7 +51,14 @@ inline NetworkInterface& nif(network_interface_t _nif) { return wifi; }
 CellularNetworkInterface cellular;
 ManagedNetworkInterface& network = cellular;
 inline NetworkInterface& nif(network_interface_t _nif) { return cellular; }
+#define Wiring_Network 1
 #endif
+
+#ifndef Wiring_Network
+#define Wiring_Network 0
+#endif
+
+#if Wiring_Network
 
 void HAL_WLAN_notify_simple_config_done()
 {
@@ -76,6 +85,7 @@ void HAL_WLAN_notify_dhcp(bool dhcp)
     network.notify_dhcp(dhcp);
 }
 
+
 const void* network_config(network_handle_t network, uint32_t param, void* reserved)
 {
     return nif(network).config();
@@ -83,12 +93,12 @@ const void* network_config(network_handle_t network, uint32_t param, void* reser
 
 void network_connect(network_handle_t network, uint32_t flags, uint32_t param, void* reserved)
 {
-    nif(network).connect(!(flags & WIFI_CONNECT_SKIP_LISTEN));
+    SYSTEM_THREAD_CONTEXT_ASYNC_CALL(nif(network).connect(!(flags & WIFI_CONNECT_SKIP_LISTEN)));
 }
 
 void network_disconnect(network_handle_t network, uint32_t param, void* reserved)
 {
-    nif(network).disconnect();
+    SYSTEM_THREAD_CONTEXT_ASYNC_CALL(nif(network).disconnect());
 }
 
 bool network_ready(network_handle_t network, uint32_t param, void* reserved)
@@ -110,18 +120,18 @@ bool network_connecting(network_handle_t network, uint32_t param, void* reserved
  */
 void network_on(network_handle_t network, uint32_t flags, uint32_t param, void* reserved)
 {
-    return nif(network).on(!(flags & 1));
+    SYSTEM_THREAD_CONTEXT_ASYNC_CALL(nif(network).on(!(flags & 1)));
 }
 
 bool network_has_credentials(network_handle_t network, uint32_t param, void* reserved)
 {
-    return nif(network).has_credentials();
+    SYSTEM_THREAD_CONTEXT_SYNC_CALL_RESULT(nif(network).has_credentials());
 }
 
 void network_off(network_handle_t network, uint32_t flags, uint32_t param, void* reserved)
 {
     // flags & 1 means also disconnect the cloud (so it doesn't autmatically connect when network resumed.)
-    return nif(network).off(flags & 1);
+    SYSTEM_THREAD_CONTEXT_ASYNC_CALL(nif(network).off(flags & 1));
 }
 
 /**
@@ -132,7 +142,7 @@ void network_off(network_handle_t network, uint32_t flags, uint32_t param, void*
  */
 void network_listen(network_handle_t network, uint32_t flags, void*)
 {
-    nif(network).listen(flags & NETWORK_LISTEN_EXIT);
+    SYSTEM_THREAD_CONTEXT_ASYNC_CALL(nif(network).listen(flags & NETWORK_LISTEN_EXIT));
 }
 
 bool network_listening(network_handle_t network, uint32_t, void*)
@@ -142,19 +152,21 @@ bool network_listening(network_handle_t network, uint32_t, void*)
 
 int network_set_credentials(network_handle_t network, uint32_t, NetworkCredentials* credentials, void*)
 {
-    return nif(network).set_credentials(credentials);
+    SYSTEM_THREAD_CONTEXT_SYNC_CALL_RESULT(nif(network).set_credentials(credentials));
 }
 
 bool network_clear_credentials(network_handle_t network, uint32_t, NetworkCredentials* creds, void*)
 {
-    return nif(network).clear_credentials();
+    SYSTEM_THREAD_CONTEXT_SYNC_CALL_RESULT(nif(network).clear_credentials());
 }
 
 void network_setup(network_handle_t network, uint32_t flags, void* reserved)
 {
-    nif(network).setup();
+    SYSTEM_THREAD_CONTEXT_ASYNC_CALL(nif(network).setup());
 }
 
+
+// These are internal methods
 void manage_smart_config()
 {
     network.listen_loop();
@@ -164,3 +176,5 @@ void manage_ip_config()
 {
     nif(0).update_config();
 }
+
+#endif

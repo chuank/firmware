@@ -1,11 +1,4 @@
 /**
- ******************************************************************************
- * @file    spark_wiring_wlan.cpp
- * @author  Satish Nair and Zachary Crockett
- * @version V1.0.0
- * @date    13-March-2013
- * @brief
- ******************************************************************************
   Copyright (c) 2013-2015 Particle Industries, Inc.  All rights reserved.
 
   This library is free software; you can redistribute it and/or
@@ -22,10 +15,12 @@
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
+
 #include "spark_wiring_system.h"
 #include "spark_wiring_usbserial.h"
 #include "system_task.h"
 #include "system_cloud.h"
+#include "system_cloud_internal.h"
 #include "system_mode.h"
 #include "system_network.h"
 #include "system_network_internal.h"
@@ -41,6 +36,7 @@
 #include "spark_wiring_network.h"
 #include "spark_wiring_constants.h"
 #include "spark_wiring_cloud.h"
+#include "system_threading.h"
 
 using spark::Network;
 
@@ -55,13 +51,13 @@ volatile uint8_t SPARK_LED_FADE = 1;
 
 volatile uint8_t Spark_Error_Count;
 
-void Network_Setup()
+void Network_Setup(bool threaded)
 {
 #if !PARTICLE_NO_NETWORK
     network.setup();
 
-    /* Trigger a WLAN device */
-    if (system_mode() == AUTOMATIC || system_mode()==SAFE_MODE)
+    // don't automatically connect when threaded since we want the thread to start asap
+    if ((!threaded && system_mode() == AUTOMATIC) || system_mode()==SAFE_MODE)
     {
         network.connect();
     }
@@ -143,7 +139,8 @@ inline uint8_t in_cloud_backoff_period()
 
 void handle_cloud_errors()
 {
-    LED_SetRGBColor(RGB_COLOR_RED);
+    // cfod resets in orange since they are soft errors
+    LED_SetRGBColor(Spark_Error_Count > 1 ? RGB_COLOR_ORANGE : RGB_COLOR_RED);
 
     while (Spark_Error_Count != 0)
     {
@@ -312,11 +309,10 @@ void Spark_Idle_Events(bool force_events/*=false*/)
     CLOUD_FN(manage_cloud_connection(force_events), (void)0);
 }
 
-
 /*
  * @brief This should block for a certain number of milliseconds and also execute spark_wlan_loop
  */
-void system_delay_ms(unsigned long ms, bool force_no_background_loop=false)
+void system_delay_ms_non_threaded(unsigned long ms, bool force_no_background_loop=false)
 {
     if (ms==0) return;
 
@@ -370,6 +366,19 @@ void system_delay_ms(unsigned long ms, bool force_no_background_loop=false)
         }
     }
 }
+
+void system_delay_ms(unsigned long ms, bool force_no_background_loop=false)
+{
+    if (system_thread_get_state(NULL) == spark::feature::DISABLED &&
+        APPLICATION_THREAD_CURRENT()) {
+        system_delay_ms_non_threaded(ms, force_no_background_loop);
+    }
+    else
+    {
+        HAL_Delay_Milliseconds(ms);
+    }
+}
+
 
 void cloud_disconnect(bool closeSocket)
 {

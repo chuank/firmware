@@ -56,10 +56,10 @@
 #define UNLOCK()       //} unlock()
 
 #ifdef MDM_DEBUG
- #if 1 // colored terminal output using ANSI escape sequences
+ #if 0 // colored terminal output using ANSI escape sequences
   #define COL(c) "\033[" c
  #else
-  #define COL(c)
+  #define COL(c) ""
  #endif
  #define DEF COL("39m")
  #define BLA COL("30m")
@@ -147,7 +147,7 @@ MDMParser::MDMParser(void)
     for (int socket = 0; socket < NUMSOCKETS; socket ++)
         _sockets[socket].handle = MDM_SOCKET_ERROR;
 #ifdef MDM_DEBUG
-    _debugLevel = 1;
+    _debugLevel = 3;
     _debugTime = HAL_Timer_Get_Milli_Seconds();
 #endif
 }
@@ -352,8 +352,14 @@ bool MDMParser::powerOn(const char* simpin)
     HAL_Pin_Mode(RESET_UC, OUTPUT);
     HAL_GPIO_Write(PWR_UC, 1);
     HAL_GPIO_Write(RESET_UC, 1);
+
+#if USE_USART3_HARDWARE_FLOW_CONTROL_RTS_CTS
+    _dev.lpm = LPM_ENABLED;
+#else
     HAL_Pin_Mode(RTS_UC, OUTPUT);
     HAL_GPIO_Write(RTS_UC, 0); // VERY IMPORTANT FOR CORRECT OPERATION W/O HW FLOW CONTROL!!
+#endif
+
     HAL_Pin_Mode(LVLOE_UC, OUTPUT);
     HAL_GPIO_Write(LVLOE_UC, 0);
 
@@ -542,7 +548,10 @@ bool MDMParser::powerOff(void)
     }
     HAL_Pin_Mode(PWR_UC, INPUT);
     HAL_Pin_Mode(RESET_UC, INPUT);
+#if USE_USART3_HARDWARE_FLOW_CONTROL_RTS_CTS
+#else   
     HAL_Pin_Mode(RTS_UC, INPUT);
+#endif
     HAL_Pin_Mode(LVLOE_UC, INPUT);
     return ok;
 }
@@ -1722,7 +1731,7 @@ MDMElectronSerial::MDMElectronSerial(int rxSize /*= 256*/, int txSize /*= 256*/)
     ElectronSerialPipe(rxSize, txSize)
 {
 #ifdef MDM_DEBUG
-        _debugLevel = -1;
+        //_debugLevel = -1;
 #endif
 
 // Important to set _dev.lpm = LPM_ENABLED; when HW FLOW CONTROL enabled.

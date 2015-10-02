@@ -18,10 +18,6 @@
  */
 #pragma once
 
-#include "dct_impl.h"
+#include "dcd_flash.h"
 #include "dct.h"
-
-STATIC_ASSERT(offset_application_dct, (offsetof(complete_dct_t, application)==7548+1024) );
-STATIC_ASSERT(size_complete_dct, (sizeof(complete_dct_t)<16384));
-
 

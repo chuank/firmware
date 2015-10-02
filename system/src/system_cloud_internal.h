@@ -82,3 +82,4 @@ bool system_cloud_active();
 
 
 #endif	/* SYSTEM_CLOUD_INTERNAL_H */
+

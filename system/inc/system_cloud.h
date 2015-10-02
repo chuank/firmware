@@ -21,6 +21,7 @@
 #include "static_assert.h"
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
 
 typedef struct SparkProtocol SparkProtocol;
 
@@ -68,29 +69,6 @@ extern "C" {
 #endif
 
 void cloud_disconnect(bool closeSocket=true);
-
-/**
- * Functions for managing the cloud connection, performing cloud operations
- * and system upgrades.
- */
-
-int Internet_Test(void);
-
-int Spark_Connect(void);
-int Spark_Disconnect(void);
-
-void Spark_Protocol_Init(void);
-int Spark_Handshake(void);
-bool Spark_Communication_Loop(void);
-void Multicast_Presence_Announcement(void);
-void Spark_Signal(bool on, unsigned, void*);
-void Spark_SetTime(unsigned long dateTime);
-void Spark_Process_Events();
-
-extern volatile uint8_t LED_Spark_Signal;
-void LED_Signaling_Override(void);
-
-void system_set_time(time_t time, unsigned param, void* reserved);
 
 
 struct String;
@@ -158,7 +136,6 @@ void spark_disconnect(void);    // should be set connected since it manages the 
 bool spark_connected(void);
 SparkProtocol* system_cloud_protocol_instance(void);
 
-char* bytes2hexbuf(const uint8_t* buf, unsigned len, char* output);
 
 #define SPARK_BUF_LEN			        600
 

@@ -1,9 +1,4 @@
 /**
- ******************************************************************************
- * @file    spark_wiring_thread.cpp
- * @authors mat
- * @date    03 March 2015
- ******************************************************************************
   Copyright (c) 2015 Particle Industries, Inc.  All rights reserved.
 
   This library is free software; you can redistribute it and/or
@@ -21,9 +16,9 @@
  ******************************************************************************
  */
 
-#if PLATFORM_THREADING
-#include "spark_wiring_thread.h"
+#pragma once
 
-ThreadFactory Thread;
 
-#endif
+#define retained  __attribute__((externally_visible, section(".retained_user")))
+
+#define retained_system  __attribute__((section(".retained_system")))

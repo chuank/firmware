@@ -27,12 +27,12 @@
 #include "delay_hal.h"
 #include "system_event.h"
 #include "system_update.h"
-#include "system_cloud.h"
-#include "rgbled.h"
-#include "module_info.h"
+#include "system_cloud_internal.h"
 #include "system_network.h"
 #include "system_ymodem.h"
 #include "system_task.h"
+#include "rgbled.h"
+#include "module_info.h"
 #include "spark_protocol_functions.h"
 #include "string_convert.h"
 #include "appender.h"
@@ -347,6 +347,7 @@ bool system_info_to_json(appender_fn append, void* append_data, hal_system_info_
 bool system_module_info(appender_fn append, void* append_data, void* reserved)
 {
     hal_system_info_t info;
+    memset(&info, 0, sizeof(info));
     info.size = sizeof(info);
     HAL_System_Info(&info, true, NULL);
     bool result = system_info_to_json(append, append_data, info);
