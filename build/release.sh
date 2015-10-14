@@ -1,4 +1,4 @@
-VERSION=0.4.6
+VERSION=0.4.6-iota
 
 function release_file()
 {
@@ -13,7 +13,7 @@ function release_binary()
 	release_file $1 elf
 	release_file $1 map
 	release_file $1 lst
-	release_file $1 hex	
+	release_file $1 hex
 }
 
 PLATFORM_ID=$1
@@ -24,6 +24,5 @@ OUT=../build/releases/release-$VERSION-p$PLATFORM_ID
 mkdir -p $OUT
 rm -rf ../build/target
 make -s PLATFORM_ID=$PLATFORM_ID clean all COMPILE_LTO=n
-release_binary system-part1 
+release_binary system-part1
 release_binary system-part2
-

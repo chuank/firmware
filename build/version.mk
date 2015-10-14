@@ -1,5 +1,5 @@
 
-VERSION_STRING = 0.4.6
+VERSION_STRING = 0.4.6-iota
 
 # PRODUCT_FIRMWARE_VERSION reported by default
 VERSION = 7
