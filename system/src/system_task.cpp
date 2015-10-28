@@ -24,6 +24,7 @@
 #include "system_mode.h"
 #include "system_network.h"
 #include "system_network_internal.h"
+#include "system_update.h"
 #include "spark_macros.h"
 #include "string.h"
 #include "system_tick_hal.h"
@@ -51,6 +52,8 @@ unsigned char wlan_profile_index;
 volatile uint8_t SPARK_LED_FADE = 1;
 
 volatile uint8_t Spark_Error_Count;
+volatile uint8_t SYSTEM_POWEROFF;
+
 
 void Network_Setup(bool threaded)
 {
@@ -275,7 +278,7 @@ void handle_cloud_connection(bool force_events)
             }
         }
 
-        if (SPARK_FLASH_UPDATE || force_events || System.mode() != MANUAL)
+        if (SPARK_FLASH_UPDATE || force_events || System.mode() != MANUAL || system_thread_get_state(NULL)==spark::feature::ENABLED)
         {
             Spark_Process_Events();
         }
@@ -305,15 +308,22 @@ void Spark_Idle_Events(bool force_events/*=false*/)
     ON_EVENT_DELTA();
     spark_loop_total_millis = 0;
 
-    manage_serial_flasher();
+    if (!SYSTEM_POWEROFF) {
+        manage_serial_flasher();
 
-    manage_network_connection();
+        manage_network_connection();
 
-    manage_smart_config();
+        manage_smart_config();
 
-    manage_ip_config();
+        manage_ip_config();
 
-    CLOUD_FN(manage_cloud_connection(force_events), (void)0);
+        CLOUD_FN(manage_cloud_connection(force_events), (void)0);
+    }
+    else
+    {
+        system_pending_shutdown();
+    }
+    system_shutdown_if_needed();
 }
 
 /*
