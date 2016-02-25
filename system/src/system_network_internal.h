@@ -155,7 +155,7 @@ protected:
 
         const uint32_t start = millis();
         uint32_t loop = start;
-        system_notify_event(wifi_listen_begin, start);
+        system_notify_event(wifi_listen_begin, 0);
 
         /* Wait for SmartConfig/SerialConfig to finish */
         while (network_listening(0, 0, NULL))
@@ -362,8 +362,6 @@ public:
     {
         if (SPARK_WLAN_STARTED)
         {
-            config_clear();
-            cloud_disconnect();
             disconnect();
             off_now();
 
@@ -448,6 +446,7 @@ public:
         }
         else
         {
+            config_clear();
             WLAN_DHCP = 0;
             SPARK_LED_FADE = 0;
             if (WLAN_LISTEN_ON_FAILED_CONNECT)
@@ -489,11 +488,14 @@ public:
 
     void update_config() override
     {
+    		// todo - IPv6 may not set this field.
         bool fetched_config = ip_config.nw.aucIP.ipv4!=0;
         if (WLAN_DHCP && !SPARK_WLAN_SLEEP)
         {
             if (!fetched_config)
             {
+            		memset(&ip_config, 0, sizeof(ip_config));
+            		ip_config.size = sizeof(ip_config);
                 fetch_ipconfig(&ip_config);
             }
         }
