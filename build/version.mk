@@ -1,9 +1,4 @@
-
-<<<<<<< HEAD
-VERSION_STRING = 0.4.8-rc.6-iota
-=======
-VERSION_STRING = 0.4.9
->>>>>>> spark/develop
+VERSION_STRING = 0.4.9-iota
 
 # PRODUCT_FIRMWARE_VERSION reported by default
 VERSION = 11
