@@ -18,6 +18,7 @@
  */
 
 #include <stddef.h>
+#include "spark_wiring_cloud.h"
 #include "spark_wiring_system.h"
 #include "spark_wiring_stream.h"
 #include "spark_wiring_rgb.h"
@@ -49,7 +50,6 @@ static uint32_t start_ymodem_flasher_serial_speed = START_YMODEM_FLASHER_SERIAL_
 
 ymodem_serial_flash_update_handler Ymodem_Serial_Flash_Update_Handler = NULL;
 
-volatile uint8_t SPARK_CLOUD_CONNECT = 1; //default is AUTOMATIC mode
 volatile uint8_t SPARK_CLOUD_SOCKETED;
 volatile uint8_t SPARK_CLOUD_CONNECTED;
 volatile uint8_t SPARK_FLASH_UPDATE;
@@ -180,6 +180,12 @@ uint32_t timeRemaining(uint32_t start, uint32_t duration)
     return (elapsed>=duration) ? 0 : duration-elapsed;
 }
 
+void set_flag(void* flag)
+{
+	volatile uint8_t* p = (volatile uint8_t*)flag;
+	*p = true;
+}
+
 int Spark_Prepare_For_Firmware_Update(FileTransfer::Descriptor& file, uint32_t flags, void* reserved)
 {
     if (file.store==FileTransfer::Store::FIRMWARE)
@@ -200,10 +206,15 @@ int Spark_Prepare_For_Firmware_Update(FileTransfer::Descriptor& file, uint32_t f
     else {
         uint32_t start = HAL_Timer_Milliseconds();
         system_set_flag(SYSTEM_FLAG_OTA_UPDATE_PENDING, 1, nullptr);
-        system_notify_event(firmware_update_pending);
-        if (waitFor(System.updatesEnabled, timeRemaining(start, 30000)))
+
+        volatile bool flag = false;
+        system_notify_event(firmware_update_pending, 0, nullptr, set_flag, (void*)&flag);
+
+        System.waitCondition([&flag]{return flag;}, timeRemaining(start, 30000));
+
+        system_set_flag(SYSTEM_FLAG_OTA_UPDATE_PENDING, 0, nullptr);
+        	if (System.updatesEnabled())		// application event is handled asynchronously
         {
-            system_set_flag(SYSTEM_FLAG_OTA_UPDATE_PENDING, 0, nullptr);
             RGB.control(true);
             RGB.color(RGB_COLOR_MAGENTA);
             SPARK_FLASH_UPDATE = 1;
@@ -212,7 +223,9 @@ int Spark_Prepare_For_Firmware_Update(FileTransfer::Descriptor& file, uint32_t f
             HAL_FLASH_Begin(file.file_address, file.file_length, NULL);
         }
         else
+        {
             result = 1;     // updates disabled
+        }
     }
     return result;
 }
@@ -232,7 +245,7 @@ inline bool canShutdown()
 	return (System.resetPending() && System.resetEnabled());
 }
 
-void system_shutdown_if_enabled()
+void system_shutdown_if_enabled(void* data=nullptr)
 {
     // shutdown if user initiated poweroff or system reset is allowed
     if (canShutdown())
