@@ -83,7 +83,7 @@ struct NetworkInterface
     virtual void connect(bool listen_enabled=true)=0;
     virtual bool connecting()=0;
     virtual bool connected()=0;
-    virtual void connect_cancel(bool cancel, bool calledFromISR)=0;
+    virtual void connect_cancel(bool cancel)=0;
     /**
      * Force a manual disconnct.
      */
@@ -201,7 +201,7 @@ protected:
         LED_On(LED_RGB);
         led_state.restore();
 
-        WLAN_LISTEN_ON_FAILED_CONNECT = started && on_stop_listening();
+        WLAN_LISTEN_ON_FAILED_CONNECT = on_stop_listening() && started;
 
         on_finalize_listening(WLAN_SMART_CONFIG_FINISHED);
 
@@ -499,7 +499,7 @@ class ManagedIPNetworkInterface : public ManagedNetworkInterface
 
 public:
 
-    void get_ipconfig(IPConfig* config)
+    void get_ipconfig(IPConfig* config) override
     {
     		update_config(true);
     		memcpy(config, this->config(), config->size);

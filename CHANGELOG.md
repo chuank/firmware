@@ -1,4 +1,44 @@
-## v0.5.0
+
+## v0.6.0-rc.1
+
+### ENHANCEMENTS
+
+- Local build support for ARM GCC 5.3.1. [#963](https://github.com/spark/firmware/issues/963)
+- Local build warns if crc32 is not present. [#941](https://github.com/spark/firmware/issues/941)
+
+### BUGFIXES
+
+- SoftAP mode persisting when setup complete if Wi-Fi was off. [#971](https://github.com/spark/firmware/issues/971) 
+- Free memory allocated for previous system interrupt handler [#927](https://github.com/spark/firmware/issues/927)
+- Fixes to I2C Slave mode implementation with clock stretching enabled [#931](https://github.com/spark/firmware/pull/931)
+
+## v0.5.1
+
+### BUGFIXES
+
+- Fixes bit mask provided for PMIC::setChargeVoltage(4208) option. [#987](https://github.com/spark/firmware/pull/987)
+- Revert EEPROM capacity to 2048 instead of 2047 Photon / 128 Core [#983](https://github.com/spark/firmware/pull/983)
+
+## v0.5.0 (same as v0.5.0-rc.2)
+
+## v0.5.0-rc.2
+
+### FEATURES
+
+- Added SYSTEM_FLAG_WIFITEST_OVER_SERIAL1 which is disabled by default. Tinker enables this by default so that the Wi-Fi Tester is available during manufacturing.  Also ensures TX/RX pins are not used for Serial1 by default, in case you want to use these as GPIO. [945](https://github.com/spark/firmware/pull/945)
+
+### ENHANCEMENTS
+
+- Timer::isActive() function added [#950](https://github.com/spark/firmware/pull/950)
+- mbedtls headers are private to the communications module now, so user applications can include their own version of mbedtls [](https://github.com/spark/firmware/pull/940)
+
+### BUGFIXES
+
+- Soft AP Claim code fix [#956](https://github.com/spark/firmware/pull/956)
+- Variable template fix [#952](https://github.com/spark/firmware/pull/952)
+- TCPClient on Electron not receiving all of the data for small files [#896](https://github.com/spark/firmware/issues/896) 
+
+## v0.5.0-rc.1
 
 ### FEATURES
 
@@ -30,7 +70,6 @@
 ### BUGFIXES
 
 - targets `program-cloud`, `program-dfu` can be used without requiring `all` and will built the firmware correctly. [#899](https://github.com/spark/firmware/issues/899)
-- TCPClient on Electron not receiving all of the data for small files [#896](https://github.com/spark/firmware/issues/896) 
 - [Electron] Free socket when the socket is closed remotely [#885](https://github.com/spark/firmware/pull/885)
 - Extended CAN filters [#857](https://github.com/spark/firmware/pull/857)
 - I2C does not ensure a stop condition completes correctly in endTransmission [#856](https://github.com/spark/firmware/pull/856)

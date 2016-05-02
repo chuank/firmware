@@ -1,7 +1,7 @@
 if [ $1 -eq 6 ] || [ $1 -eq 8 ]; then
-	VERSION="0.4.9-iota"
+	VERSION="0.5.0-rc.2-iota"
 else if [ $1 -eq 10 ]; then
-	VERSION="0.4.9-iota"
+	VERSION="0.5.0-rc.2-iota"
 	fi
 fi
 
