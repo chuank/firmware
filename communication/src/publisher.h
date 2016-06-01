@@ -31,78 +31,78 @@ namespace protocol
 class Publisher
 {
 public:
+    inline bool is_system(const char* event_name)
+    {
+        // if there were a strncmpi this would be easier!
+        char prefix[6];
+        if (!*event_name || strlen(event_name) < 5)
+            return false;
+        memcpy(prefix, event_name, 5);
+        prefix[5] = '\0';
+        return !strcasecmp(prefix, "spark");
+    }
 
-	inline bool is_system(const char* event_name)
-	{
-		// if there were a strncmpi this would be easier!
-		char prefix[6];
-		if (!*event_name || strlen(event_name) < 5)
-			return false;
-		memcpy(prefix, event_name, 5);
-		prefix[5] = '\0';
-		return !strcasecmp(prefix, "spark");
-	}
+    bool is_rate_limited(bool is_system_event, system_tick_t millis)
+    {
+        // disable rate limiting!
+        return true;
 
-	bool is_rate_limited(bool is_system_event, system_tick_t millis)
-	{
-		if (is_system_event)
-		{
-			static uint16_t lastMinute = 0;
-			static uint8_t eventsThisMinute = 0;
-
-			uint16_t currentMinute = uint16_t(millis >> 16);
-			if (currentMinute == lastMinute)
-			{      // == handles millis() overflow
-				if (eventsThisMinute == 255)
-					return true;
-			}
-			else
-			{
-				lastMinute = currentMinute;
-				eventsThisMinute = 0;
-			}
-			eventsThisMinute++;
-		}
-		else
-		{
-			static system_tick_t recent_event_ticks[5] =
-			{ (system_tick_t) -1000, (system_tick_t) -1000,
-					(system_tick_t) -1000, (system_tick_t) -1000,
-					(system_tick_t) -1000 };
-			static int evt_tick_idx = 0;
-
-			system_tick_t now = recent_event_ticks[evt_tick_idx] = millis;
-			evt_tick_idx++;
-			evt_tick_idx %= 5;
-			if (now - recent_event_ticks[evt_tick_idx] < 1000)
-			{
-				// exceeded allowable burst of 4 events per second
-				return true;
-			}
-		}
-		return false;
-	}
+        // if (is_system_event)
+        // {
+        // 	static uint16_t lastMinute = 0;
+        // 	static uint8_t eventsThisMinute = 0;
+        //
+        // 	uint16_t currentMinute = uint16_t(millis >> 16);
+        // 	if (currentMinute == lastMinute)
+        // 	{      // == handles millis() overflow
+        // 		if (eventsThisMinute == 255)
+        // 			return true;
+        // 	}
+        // 	else
+        // 	{
+        // 		lastMinute = currentMinute;
+        // 		eventsThisMinute = 0;
+        // 	}
+        // 	eventsThisMinute++;
+        // }
+        // else
+        // {
+        // 	static system_tick_t recent_event_ticks[5] =
+        // 	{ (system_tick_t) -1000, (system_tick_t) -1000,
+        // 			(system_tick_t) -1000, (system_tick_t) -1000,
+        // 			(system_tick_t) -1000 };
+        // 	static int evt_tick_idx = 0;
+        //
+        // 	system_tick_t now = recent_event_ticks[evt_tick_idx] = millis;
+        // 	evt_tick_idx++;
+        // 	evt_tick_idx %= 5;
+        // 	if (now - recent_event_ticks[evt_tick_idx] < 1000)
+        // 	{
+        // 		// exceeded allowable burst of 4 events per second
+        // 		return true;
+        // 	}
+        // }
+        // return false;
+    }
 
 public:
+    ProtocolError send_event(MessageChannel& channel, const char* event_name, const char* data,
+                             int ttl, EventType::Enum event_type, int flags, system_tick_t time)
+    {
+        bool is_system_event = is_system(event_name);
+        bool rate_limited = is_rate_limited(is_system_event, time);
+        if (rate_limited)
+            return BANDWIDTH_EXCEEDED;
 
-	ProtocolError send_event(MessageChannel& channel, const char* event_name,
-			const char* data, int ttl, EventType::Enum event_type, int flags,
-			system_tick_t time)
-	{
-		bool is_system_event = is_system(event_name);
-		bool rate_limited = is_rate_limited(is_system_event, time);
-		if (rate_limited)
-			return BANDWIDTH_EXCEEDED;
-
-		Message message;
-		channel.create(message);
-		bool noack = flags & EventType::NO_ACK;
-		bool confirmable = channel.is_unreliable() && !noack;
-		size_t msglen = Messages::event(message.buf(), 0, event_name, data, ttl,
-				event_type, confirmable);
-		message.set_length(msglen);
-		return channel.send(message);
-	}
+        Message message;
+        channel.create(message);
+        bool noack = flags & EventType::NO_ACK;
+        bool confirmable = channel.is_unreliable() && !noack;
+        size_t msglen =
+            Messages::event(message.buf(), 0, event_name, data, ttl, event_type, confirmable);
+        message.set_length(msglen);
+        return channel.send(message);
+    }
 };
-
-}}
+}
+}
