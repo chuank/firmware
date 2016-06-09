@@ -770,8 +770,7 @@ int SparkProtocol::description(unsigned char* buf, unsigned char token,
     appender.append("{");
     bool has_content = false;
 
-    if (desc_flags && DESCRIBE_APPLICATION)
-    {
+    if (desc_flags & DESCRIBE_APPLICATION) {
         has_content = true;
         appender.append("\"f\":[");
 

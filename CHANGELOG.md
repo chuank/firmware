@@ -3,18 +3,33 @@
 
 ### FEATURES
 
+- [Electron] Reduced data consumption connecting to the cloud with deep sleep. (NB: see the docs for how to gain the full data reduction.) [#953](https://github.com/spark/firmware/pull/953)
+- Can set Claim Code via the Serial interface (for use by the CLI.) [#602](https://github.com/spark/firmware/issues/602) 
+- Device ID available via dfu-util. [#949](https://github.com/spark/firmware/pull/949)
+
 ### ENHANCEMENTS
 
 - Local build warns if crc32 is not present. [#941](https://github.com/spark/firmware/issues/941)
+- [Photon/Core] MAC address is available immediately after `WiFi.on()` [#879](https://github.com/spark/firmware/issues/879)
 
 ### BUGFIXES
 
 - SoftAP mode persisting when setup complete if Wi-Fi was off. [#971](https://github.com/spark/firmware/issues/971) 
 - Free memory allocated for previous system interrupt handler [#927](https://github.com/spark/firmware/issues/927)
 - Fixes to I2C Slave mode implementation with clock stretching enabled [#931](https://github.com/spark/firmware/pull/931)
+- `millis()`/`micros()` are now atomic to ensure monotonic values. Fixes [#916](https://github.com/spark/firmware/issues/916) and [#925](https://github.com/spark/firmware/issues/925) 
 
 
-## v0.5.1
+
+
+## v0.5.1 (same as v0.5.1-rc.2)
+
+### FEATURES
+
+- [Electron] Added support in HAL for a SMS received callback handler.
+
+
+## v0.5.1-rc.1
 
 ### FEATURES
 
@@ -33,8 +48,6 @@
 
 
 ## v0.5.0 (same as v0.5.0-rc.2)
-
-## v0.5.0-rc.2
 
 ### FEATURES
 

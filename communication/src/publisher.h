@@ -45,7 +45,7 @@ public:
     bool is_rate_limited(bool is_system_event, system_tick_t millis)
     {
         // disable rate limiting!
-        return true;
+        return false;
 
         // if (is_system_event)
         // {
