@@ -515,8 +515,8 @@ void HAL_Core_Enter_Stop_Mode(uint16_t wakeUpPin, uint16_t edgeTriggerMode, long
 
     SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
 
-    // Disable USB Serial (detach)
-    USB_USART_Init(0);
+    // Detach USB
+    HAL_USB_Detach();
 
     // Flush all USARTs
     for (int usart = 0; usart < TOTAL_USARTS; usart++)
@@ -554,7 +554,13 @@ void HAL_Core_Enter_Stop_Mode(uint16_t wakeUpPin, uint16_t edgeTriggerMode, long
         }
 
         HAL_Pin_Mode(wakeUpPin, wakeUpPinMode);
-        HAL_Interrupts_Attach(wakeUpPin, NULL, NULL, edgeTriggerMode, NULL);
+        HAL_InterruptExtraConfiguration irqConf = {0};
+        irqConf.version = HAL_INTERRUPT_EXTRA_CONFIGURATION_VERSION_2;
+        irqConf.IRQChannelPreemptionPriority = 0;
+        irqConf.IRQChannelSubPriority = 0;
+        irqConf.keepHandler = 1;
+        irqConf.keepPriority = 1;
+        HAL_Interrupts_Attach(wakeUpPin, NULL, NULL, edgeTriggerMode, &irqConf);
 
         exit_conditions |= STOP_MODE_EXIT_CONDITION_PIN;
     }
@@ -585,7 +591,7 @@ void HAL_Core_Enter_Stop_Mode(uint16_t wakeUpPin, uint16_t edgeTriggerMode, long
 
     if (exit_conditions & STOP_MODE_EXIT_CONDITION_PIN) {
         /* Detach the Interrupt pin */
-        HAL_Interrupts_Detach(wakeUpPin);
+        HAL_Interrupts_Detach_Ext(wakeUpPin, 1, NULL);
     }
 
     if (exit_conditions & STOP_MODE_EXIT_CONDITION_RTC) {
@@ -603,7 +609,7 @@ void HAL_Core_Enter_Stop_Mode(uint16_t wakeUpPin, uint16_t edgeTriggerMode, long
 
     SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 
-    USB_USART_Init(9600);
+    HAL_USB_Attach();
 }
 
 void HAL_Core_Execute_Stop_Mode(void)
@@ -637,8 +643,14 @@ void HAL_Core_Execute_Stop_Mode(void)
     while(RCC_GetSYSCLKSource() != 0x08);
 }
 
-void HAL_Core_Enter_Standby_Mode(void)
+void HAL_Core_Enter_Standby_Mode(uint32_t seconds, void* reserved)
 {
+    // Configure RTC wake-up
+    if (seconds > 0) {
+        HAL_RTC_Cancel_UnixAlarm();
+        HAL_RTC_Set_UnixAlarm((time_t) seconds);
+    }
+
     HAL_Core_Execute_Standby_Mode();
 }
 
